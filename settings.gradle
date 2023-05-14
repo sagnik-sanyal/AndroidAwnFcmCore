@@ -16,3 +16,11 @@ dependencyResolutionManagement {
 rootProject.name = "AwN Fcm Android Core"
 include ':app'
 include ':core'
+
+def useAwnLocalReferences = false
+if (useAwnLocalReferences) {
+    include ':awn_core'
+    def localAndroidCoreFolder = new File(rootDir, "../AndroidAwnCore/core")
+    assert localAndroidCoreFolder.exists()
+    project(":awn_core").projectDir=localAndroidCoreFolder
+}
