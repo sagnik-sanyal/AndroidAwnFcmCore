@@ -1,0 +1,92 @@
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+}
+
+group 'me.carda.awesome_notifications_fcm.core'
+version '0.7.9-pre.5'
+
+android {
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 33
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        profile {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+def firebaseCoreProject = findProject(':firebase_core')
+def getRootProjectExtOrCoreProperty(name, firebaseCoreProject) {
+    if (firebaseCoreProject == null) return '30.3.1'
+    if (!rootProject.ext.has('FlutterFire')) return firebaseCoreProject.properties[name]
+    if (!rootProject.ext.get('FlutterFire')[name]) return firebaseCoreProject.properties[name]
+    if (rootProject.ext.get('FlutterFire').get(name)) return rootProject.ext.get('FlutterFire').get(name)
+    return '30.3.1'
+}
+
+dependencies {
+    implementation 'me.carda:androidcore:0.7.11-pre.5'
+//    implementation project(':awn_core')
+
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.google.guava:guava:31.1-android'
+
+    // api firebaseCoreProject
+    implementation platform("com.google.firebase:firebase-bom:${getRootProjectExtOrCoreProperty("FirebaseSDKVersion", firebaseCoreProject)}")
+    implementation 'com.google.firebase:firebase-messaging'//:23.0.1
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-common'
+
+    // Required for instrumented tests
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+    testImplementation 'org.mockito:mockito-core:5.0.0'
+    testImplementation 'org.mockito:mockito-inline:5.0.0'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+
+    implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'com.google.android.material:material:1.6.1'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release (MavenPublication) {
+                from components.release
+
+                groupId = 'me.carda'
+                artifactId = 'AwnFcmAndroidCore'
+                version = '0.7.9-pre.5'
+            }
+        }
+    }
+}
