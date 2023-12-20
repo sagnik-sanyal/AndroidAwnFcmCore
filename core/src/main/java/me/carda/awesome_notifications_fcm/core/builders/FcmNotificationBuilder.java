@@ -30,7 +30,9 @@ import me.carda.awesome_notifications.core.utils.ListUtils;
 import me.carda.awesome_notifications.core.utils.MapUtils;
 import me.carda.awesome_notifications.core.utils.StringUtils;
 import me.carda.awesome_notifications_fcm.core.FcmDefinitions;
+import me.carda.awesome_notifications_fcm.core.interpreters.JsonFlattener;
 import me.carda.awesome_notifications_fcm.core.models.SilentDataModel;
+import java.util.Iterator;
 
 
 public class FcmNotificationBuilder {
@@ -65,7 +67,6 @@ public class FcmNotificationBuilder {
         Map<String, Object> awesomeData, androidCustomData = null;
 
         remoteData.remove(FcmDefinitions.NOTIFICATION_MODEL_IOS);
-
         if(remoteData.containsKey(Definitions.NOTIFICATION_MODEL_CONTENT)) {
             if (remoteData.containsKey(FcmDefinitions.NOTIFICATION_MODEL_ANDROID)) {
                 androidCustomData = JsonUtils.fromJson(remoteData.get(FcmDefinitions.NOTIFICATION_MODEL_ANDROID));
@@ -76,7 +77,13 @@ public class FcmNotificationBuilder {
             }
         }
         else {
-            awesomeData = receiveStandardNotificationContent(notificationId, context, remoteMessage);
+            for (String key : remoteData.keySet()) {
+                if (key.startsWith("gcm.")) remoteData.remove(key);
+            }
+            awesomeData = MapUtils.deepMerge(
+                receiveStandardNotificationContent(notificationId, context, remoteMessage),
+                JsonFlattener.decode(remoteData)
+            );
         }
 
         NotificationModel notificationModel = new NotificationModel();
