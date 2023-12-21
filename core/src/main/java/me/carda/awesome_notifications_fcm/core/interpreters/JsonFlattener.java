@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
+import me.carda.awesome_notifications.core.Definitions;
+import me.carda.awesome_notifications_fcm.core.FcmDefinitions;
+
 public class JsonFlattener {
 
     private static boolean isNumber(String value){
@@ -129,11 +132,13 @@ public class JsonFlattener {
         }
     }
 
+    @NonNull
     public static Map<String, Object> decode(Map<String, String> flatMap) {
         Map<String, Object> unflattenedMap = new HashMap<>();
         for (Map.Entry<String, String> entry : flatMap.entrySet()) {
             addToStructure(unflattenedMap, entry.getKey(), entry.getValue());
         }
+
         removeNullValues(unflattenedMap);
         return unflattenedMap;
     }
