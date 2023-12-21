@@ -56,6 +56,35 @@ public class FcmNotificationBuilder {
 
     // ****************************************************************
 
+    private static final String regexFLattenedKey =
+            "^" + "gcm" + "\\..*|" +
+            "^" + Definitions.NOTIFICATION_MODEL_CONTENT + "\\..*|" +
+            "^" + Definitions.NOTIFICATION_MODEL_BUTTONS + "\\..*|" +
+            "^" + Definitions.NOTIFICATION_MODEL_SCHEDULE + "\\..*|" +
+            "^" + Definitions.NOTIFICATION_MODEL_LOCALIZATIONS + "\\..*|" +
+            "^" + FcmDefinitions.NOTIFICATION_MODEL_ANDROID + "\\..*|" +
+            "^" + FcmDefinitions.NOTIFICATION_MODEL_IOS + "\\..*";
+
+    public void removeFlattenedValues(Map<String, ?> map) {
+        Iterator<? extends Map.Entry<String, ?>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, ?> entry = iterator.next();
+            String key = entry.getKey();
+            if (key.matches(regexFLattenedKey)){
+                iterator.remove();
+            }
+        }
+    }
+
+    private static Map<String, String> getPayloadReference(Map<String, Object> map){
+        Object content = map.get(Definitions.NOTIFICATION_MODEL_CONTENT);
+        if (!(content instanceof Map)) return null;
+
+        Object payload = ((Map<String, Object>) content).get(Definitions.NOTIFICATION_PAYLOAD);
+        if (!(payload instanceof Map)) return null;
+        return (Map<String, String>) payload;
+    }
+
     public NotificationModel buildNotificationFromExtras(
             @NonNull Context context,
             @NonNull int notificationId,
@@ -63,28 +92,38 @@ public class FcmNotificationBuilder {
             @NonNull NotificationParams notificationParams
     ) throws AwesomeNotificationsException {
 
-        Map<String, String> remoteData = remoteMessage.getData();
-        Map<String, Object> awesomeData, androidCustomData = null;
-
+        Map<String, String> remoteData = new HashMap<>(remoteMessage.getData());
         remoteData.remove(FcmDefinitions.NOTIFICATION_MODEL_IOS);
-        if(remoteData.containsKey(Definitions.NOTIFICATION_MODEL_CONTENT)) {
-            if (remoteData.containsKey(FcmDefinitions.NOTIFICATION_MODEL_ANDROID)) {
-                androidCustomData = JsonUtils.fromJson(remoteData.get(FcmDefinitions.NOTIFICATION_MODEL_ANDROID));
-            }
-            awesomeData = receiveAwesomeNotificationContent(notificationId, remoteMessage, remoteData);
+
+        Map<String, Object>
+                awesomeData = null, awesomeContent = null, awesomeAndroid = null,
+                standardContent = receiveStandardNotificationContent(
+                        notificationId, context, remoteMessage);
+
+        String contentCustomData = remoteData.get(Definitions.NOTIFICATION_MODEL_CONTENT);
+        if (contentCustomData != null) {
+            awesomeContent = receiveAwesomeNotificationContent(
+                                    notificationId, remoteMessage, remoteData);
+
+            String androidCustomData = remoteData.get(FcmDefinitions.NOTIFICATION_MODEL_ANDROID);
             if (androidCustomData != null) {
-                awesomeData = new HashMap<String, Object>(MapUtils.deepMerge(awesomeData, androidCustomData));
+                awesomeAndroid = JsonUtils.fromJson(androidCustomData);
+            }
+        } else {
+            awesomeContent = JsonFlattener.decode(remoteData);
+            Object androidCustomData = awesomeContent.get(FcmDefinitions.NOTIFICATION_MODEL_ANDROID);
+            if (androidCustomData instanceof Map) {
+                awesomeAndroid = (Map<String, Object>) androidCustomData;
             }
         }
-        else {
-            for (String key : remoteData.keySet()) {
-                if (key.startsWith("gcm.")) remoteData.remove(key);
-            }
-            awesomeData = MapUtils.deepMerge(
-                receiveStandardNotificationContent(notificationId, context, remoteMessage),
-                JsonFlattener.decode(remoteData)
-            );
+
+        awesomeData = MapUtils.deepMerge(standardContent, awesomeContent);
+        if (awesomeAndroid != null) {
+            awesomeData = MapUtils.deepMerge(awesomeData, awesomeAndroid);
         }
+
+        Map<String, String> payloadReference = getPayloadReference(awesomeData);
+        if (payloadReference != null) removeFlattenedValues(payloadReference);
 
         NotificationModel notificationModel = new NotificationModel();
         return notificationModel.fromMap(awesomeData);
@@ -144,7 +183,7 @@ public class FcmNotificationBuilder {
             contentData.put(Definitions.NOTIFICATION_CHANNEL_KEY, channelKey);
         }
 
-        Map<String, String> payload = remoteMessage.getData();
+        Map<String, String> payload = new HashMap<>(remoteMessage.getData());
         if(!payload.isEmpty()){
             contentData.put(Definitions.NOTIFICATION_PAYLOAD, payload);
         }
