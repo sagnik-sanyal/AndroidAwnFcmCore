@@ -9,30 +9,25 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
-import me.carda.awesome_notifications.core.Definitions;
-import me.carda.awesome_notifications_fcm.core.FcmDefinitions;
-
 public class JsonFlattener {
 
     private static boolean isNumber(String value){
         return value != null && value.matches("\\d+");
     }
 
-    private static Object getFromCollection(@NonNull String key, @NonNull String nextKey, @Nullable Object collection){
-        Object nextCollection;
-        if (collection == null) return null;
+    @NonNull
+    private static Object getStructure(@NonNull String key, @NonNull String nextKey, @NonNull Object collection){
+        Object nextCollection = null;
         if (collection instanceof List) {
             List<Object> list = (List<Object>) collection;
             int index = Integer.parseInt(key);
             if (index >= 0 && index < list.size()) {
                 nextCollection = list.get(index);
-            } else {
-                nextCollection = null;
             }
         }
-        else if(collection instanceof Map)
+        else if(collection instanceof Map) {
             nextCollection = ((Map<String, Object>) collection).get(key);
-        else return null;
+        }
 
         if (nextCollection == null) {
             if (isNumber(nextKey)) return new ArrayList<>();
@@ -41,7 +36,7 @@ public class JsonFlattener {
         return nextCollection;
     }
 
-    private static void addToStructure(String key, Object value, Object structure){
+    private static void putStructure(String key, Object value, Object structure){
         if (structure instanceof List){
             if (!isNumber(key)) return;
             addToList(Integer.parseInt(key), value, (List<Object>) structure);
@@ -80,13 +75,13 @@ public class JsonFlattener {
         for (int position = 0; position < lastIndex; position++) {
             String currentKey = keys[position];
             String nextKey = keys[position+1];
-            Object currentStructure = getFromCollection(currentKey, nextKey, lastStructure);
-            addToStructure(currentKey, currentStructure, lastStructure);
+            Object currentStructure = getStructure(currentKey, nextKey, lastStructure);
+            putStructure(currentKey, currentStructure, lastStructure);
             lastStructure = currentStructure;
         }
 
         String lastPart = keys[lastIndex];
-        addToStructure(lastPart, convertToProperValue(value), lastStructure);
+        putStructure(lastPart, convertToProperValue(value), lastStructure);
     }
 
     private static Object convertToProperValue(String value) {
