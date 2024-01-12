@@ -146,8 +146,33 @@ public class FcmNotificationBuilder {
         Map<String, Object> parsedLocalizations =
                 extractNotificationData(Definitions.NOTIFICATION_MODEL_LOCALIZATIONS, localRemoteData);
 
+        Object parsedId = parsedNotificationContent.get(Definitions.NOTIFICATION_ID);
+        if (parsedId != null) {
+            try {
+                if (parsedId instanceof Integer) {
+                    notificationId = (Integer) parsedId;
+                } else if (parsedId instanceof String) {
+                    notificationId = Integer.parseInt((String) parsedId);
+                } else if (parsedId instanceof Number) {
+                    notificationId = ((Number) parsedId).intValue();
+                }
+            } catch (NumberFormatException e) {
+                ExceptionFactory
+                        .getInstance()
+                        .registerNewAwesomeException(
+                                TAG,
+                                ExceptionCode.CODE_INVALID_ARGUMENTS,
+                                "Invalid format for notification ID: "+parsedId,
+                                ExceptionCode.DETAILED_INVALID_ARGUMENTS+".fcmNotificationBuilder.parsedId");
+            }
+        }
+
         Map<String, Object> originalNotificationData =
-                extractFcmNotificationIntoAwesome(notificationId, remoteMessage, remoteNotification);
+                extractFcmNotificationIntoAwesome(
+                        notificationId,
+                        remoteMessage,
+                        remoteNotification
+                );
 
         parsedNotificationContent = MapUtils.deepMerge(
                 parsedNotificationContent,
