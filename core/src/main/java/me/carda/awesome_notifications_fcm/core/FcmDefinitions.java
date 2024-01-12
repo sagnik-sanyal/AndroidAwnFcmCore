@@ -17,6 +17,18 @@ public interface FcmDefinitions {
     String RPC_DISMISS_BY_GROUP = "dismissByGroup";
     String RPC_DISMISS_ALL = "dismissAll";
 
+    String RPC_CANCEL_SCHEDULE = "cancelSchedule";
+    String RPC_CANCEL_SCHEDULE_BY_CHANNEL = "cancelScheduleByChannel";
+    String RPC_CANCEL_SCHEDULE_BY_GROUP = "cancelScheduleByGroup";
+    String RPC_CANCEL_ALL_SCHEDULES = "cancelAllSchedules";
+
+    String RPC_CANCEL_NOTIFICATION = "cancelNotification";
+    String RPC_CANCEL_NOTIFICATION_BY_CHANNEL = "cancelNotificationByChannel";
+    String RPC_CANCEL_NOTIFICATION_BY_GROUP = "cancelNotificationByGroup";
+    String RPC_CANCEL_ALL_NOTIFICATIONS = "cancelAllNotifications";
+
+    String RPC_STOP = "dontCallFlutter";
+
     String FIREBASE_FLAG_IS_SILENT_DATA = "isSilentData";
     String FIREBASE_TITLE = "fcm.title";
     String FIREBASE_BODY = "fcm.body";

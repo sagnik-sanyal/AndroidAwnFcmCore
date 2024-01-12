@@ -14,10 +14,13 @@ final class Crypto {
     static final String signProtocol = "SHA256with"+keyType;
 
     static final String publicKey =
-        "MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFf9hnX01Ey13U22dcPIbvkvEbF8" +
-        "6dxGDWFpp67x6/HdAmCEYCRKD0VgiZy53TOU9byI1KGECeneEAkdinY8GvxOtoJ0" +
-        "9OWQOR+0/2IDY7DrsXiw9n0Fm1kEGVzzD5EubglhOdg7yFpoF1iN7hpFja2BBldp" +
-        "XSnFAPBN0uAgiBdZAgMBAAE=";
+        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAojIclHvIDZtrISYJT1yu" +
+        "bine2wDALTCnxf96q08RAc1tfkgbXYnd3ILqa3viOmKD6hNALqWzjmIY+yotB21y" +
+        "SJEsDAiLB8SVDG6ai+Lcp3pQ6YmO76YzmgGdFZoN/1t7iEhn82f75PgxAKmBoIc5" +
+        "9gF2MB9JZgiMW0arsz3oFiqhw/YEK6wp5fU54wLwr0Xp38BiONnWharZxgrmAnAD" +
+        "ozwH8t5Hq21NMbwRwF+yUGhKYzQOIUoIRl9DRMSdw3eQ/o74pJb5GeIkko37Z1Ec" +
+        "px2xEZ7OjVFM9S8ZGipHPeJxFogyWZcFSzJ83AvbQH/dioXY0Bj3+J0GnPbe2Sgx" +
+        "dwIDAQAB";
 
     @Nullable
     static PublicKey getPublicKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
