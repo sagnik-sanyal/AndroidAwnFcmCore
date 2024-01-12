@@ -30,8 +30,8 @@ enum LicenseErrorState {
 
 public final class LicenseManager {
     public final String TAG = "LicenseManager";
-    public final String LIB_VERSION = "0.9.0";
-    public final int LIB_DATE = 20240102;
+    public final String LIB_VERSION = "0.9.1";
+    public final int LIB_DATE = 20240111;
 
     public static LicenseErrorState licenseErrorState = LicenseErrorState.withoutValidation;
 
