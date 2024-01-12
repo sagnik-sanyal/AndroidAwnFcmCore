@@ -14,6 +14,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.util.List;
+import java.util.Objects;
 
 import me.carda.awesome_notifications.core.AwesomeNotifications;
 import me.carda.awesome_notifications.core.exceptions.AwesomeNotificationsException;
@@ -21,9 +22,18 @@ import me.carda.awesome_notifications.core.logs.Logger;
 import me.carda.awesome_notifications.core.utils.StringUtils;
 import me.carda.awesome_notifications_fcm.core.managers.FcmDefaultsManager;
 
+enum LicenseErrorState {
+    expired,
+    singleDoNotMatch,
+    withoutValidation
+}
+
 public final class LicenseManager {
-    public static final String TAG = "LicenseManager";
-    public static final String APP_VERSION = "0.7.5-pre.1";
+    public final String TAG = "LicenseManager";
+    public final String LIB_VERSION = "0.9.0";
+    public final int LIB_DATE = 20240102;
+
+    public static LicenseErrorState licenseErrorState = LicenseErrorState.withoutValidation;
 
     // ************** SINGLETON PATTERN ***********************
 
@@ -44,62 +54,72 @@ public final class LicenseManager {
     ) throws AwesomeNotificationsException
     {
         List<String> licenseKeys = FcmDefaultsManager.getLicenseKeys(context);
-        if (licenseKeys == null) {
-            printLicenseMessageError(context);
-            return false;
-        }
+        if (licenseKeys == null) return false;
 
         try {
             PublicKey publicKey = Crypto.getPublicKey();
             if(publicKey == null) return false;
 
             for (String licenseKey : licenseKeys){
-                if(StringUtils.getInstance().isNullOrEmpty(licenseKey))
+                if(StringUtils.getInstance().isNullOrEmpty(licenseKey)) {
                     return false;
+                }
 
-                boolean isSingleVersion = false;
-                String base64Encoded;
-                if(licenseKey.startsWith("single:")){
-                    isSingleVersion = true;
-                    if(!licenseKey.startsWith("single:"+APP_VERSION+":")){
+                String[] parts = licenseKey.split("==", 2);
+                String prefix = parts[0];
+                String base64Encoded = parts[1];
+
+                // License keys from year 1
+                if ("".equals(base64Encoded)) {
+                    licenseErrorState = LicenseErrorState.expired;
+                    continue;
+                }
+                boolean isSingleVersion = prefix.startsWith("single::");
+
+                if(isSingleVersion){
+                    if(!licenseKey.startsWith("single::"+ LIB_VERSION +"==")){
+                        licenseErrorState = LicenseErrorState.singleDoNotMatch;
                         continue;
                     }
-                    base64Encoded = licenseKey
-                            .replaceFirst("single:[\\w\\.\\+]+:", "");
-                }
-                else {
-                    base64Encoded = licenseKey;
+                    prefix = prefix
+                            .replaceFirst("single::", "");
                 }
 
                 if(
                     assignerVerify(
                         AwesomeNotifications.getPackageName(context),
-                        isSingleVersion ? APP_VERSION+":" : "",
+                        prefix,
                         publicKey,
                         Base64.decode(base64Encoded, Base64.DEFAULT))
                 ){
-                    return true;
+                    if (isSingleVersion) {
+                        if (LIB_VERSION.equals(prefix)) return true;
+                        licenseErrorState = LicenseErrorState.singleDoNotMatch;
+                    } else {
+                        int licenseDate = Integer.parseInt(prefix.replace("-", ""));
+                        if (LIB_DATE <= licenseDate + 10000) return true;
+                        licenseErrorState = LicenseErrorState.expired;
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        printLicenseMessageError(context);
         return false;
     }
 
     @NonNull
     private boolean assignerVerify(
             @NonNull String packageName,
-            @NonNull String packageVersion,
+            @NonNull String signaturePrefix,
             @NonNull PublicKey publicKey,
             @NonNull byte[] signature
     ) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException
     {
         Signature publicSign = Signature.getInstance(Crypto.signProtocol);
         publicSign.initVerify(publicKey);
-        publicSign.update((packageVersion+packageName)
+        publicSign.update((signaturePrefix+":"+packageName)
                 .getBytes(StandardCharsets.UTF_8));
         return publicSign.verify(signature);
     }
@@ -120,12 +140,32 @@ public final class LicenseManager {
     }
 
     void printLicenseMessageError(Context context) {
-        String licenseMessage =
-                "You need to insert a valid license key to use Awesome Notification's FCM " +
-                        "plugin in release mode without watermarks (application id: \"" +
-                        AwesomeNotifications.getPackageName(context) +
-                        "\"). To know more about it, please " +
-                        "visit https://www.awesome-notifications.carda.me#prices";
+        String licenseMessage;
+        switch (licenseErrorState){
+            case expired:
+                licenseMessage =
+                        "WARNING: The current licenses for Awesome Notifications does not cover this FCM plugin release. " +
+                                "Please update your license to use the latest version of Awesome Notification's FCM plugin in release mode without watermarks. " +
+                                "Application ID: \"" + AwesomeNotifications.getPackageName(context) + "\". Version: "+ LIB_VERSION +" . "+
+                                "For more information and to update your license, please visit https://awesome-notifications.carda.me#prices.";
+                break;
+            case singleDoNotMatch:
+                licenseMessage =
+                        "WARNING: Your current single license key does not cover this version of the Awesome Notifications FCM plugin. " +
+                                "Please upgrade your license to use this version of the plugin in release mode without limitations. " +
+                                "Application ID: \"" + AwesomeNotifications.getPackageName(context) + "\". Version: "+ LIB_VERSION +" . "+
+                                "For more information and to upgrade your license, please visit https://awesome-notifications.carda.me#prices.";
+                break;
+            case withoutValidation:
+            default:
+                licenseMessage =
+                        "You need to insert a valid license key (Year 2) to use Awesome Notification's FCM " +
+                                "plugin in release mode without watermarks (application id: \"" +
+                                AwesomeNotifications.getPackageName(context) +
+                                "\"). Version: "+ LIB_VERSION +" . To know more about it, please " +
+                                "visit https://awesome-notifications.carda.me#prices";
+                break;
+        }
 
 
         boolean isDebuggable = false;
@@ -141,10 +181,20 @@ public final class LicenseManager {
             e.printStackTrace();
         }
 
-        if(isDebuggable) {
-            Logger.i(TAG, licenseMessage);
-        } else {
-            Logger.e(TAG, licenseMessage);
+        switch (licenseErrorState){
+            case expired:
+            case singleDoNotMatch:
+                Logger.w(TAG, licenseMessage);
+                break;
+
+            case withoutValidation:
+            default:
+                if(isDebuggable) {
+                    Logger.i(TAG, licenseMessage);
+                } else {
+                    Logger.e(TAG, licenseMessage);
+                }
+                break;
         }
     }
 }
