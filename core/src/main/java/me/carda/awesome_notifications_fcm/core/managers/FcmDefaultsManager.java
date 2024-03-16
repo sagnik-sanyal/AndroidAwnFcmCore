@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import me.carda.awesome_notifications.core.AwesomeNotificationsExtension;
@@ -29,13 +30,13 @@ public final class FcmDefaultsManager {
 
     public static void saveDefault(
             @NonNull Context context,
-            @NonNull List<String> licenseKeys,
+            @Nullable List<String> licenseKeys,
             @Nullable Long dartCallback,
             @Nullable Long silentCallback
     ) throws AwesomeNotificationsException {
         FcmDefaultsModel defaults = getDefaults(context);
 
-        defaults.licenseKeys = licenseKeys;
+        defaults.licenseKeys = licenseKeys == null ? new ArrayList<>() : licenseKeys;
         defaults.reverseDartCallback = dartCallback == null ? null : dartCallback.toString();
         defaults.silentDataCallback = silentCallback == null ? null : silentCallback.toString();
 

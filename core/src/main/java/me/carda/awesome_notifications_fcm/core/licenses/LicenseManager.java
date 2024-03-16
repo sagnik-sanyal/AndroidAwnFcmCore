@@ -30,8 +30,8 @@ enum LicenseErrorState {
 
 public final class LicenseManager {
     public final String TAG = "LicenseManager";
-    public final String LIB_VERSION = "0.9.1";
-    public final int LIB_DATE = 20240111;
+    public final String LIB_VERSION = "0.9.3";
+    public final int LIB_DATE = 20240315;
 
     public static LicenseErrorState licenseErrorState = LicenseErrorState.withoutValidation;
 
@@ -54,7 +54,7 @@ public final class LicenseManager {
     ) throws AwesomeNotificationsException
     {
         List<String> licenseKeys = FcmDefaultsManager.getLicenseKeys(context);
-        if (licenseKeys == null) return false;
+        if (licenseKeys == null) return true;
 
         try {
             PublicKey publicKey = Crypto.getPublicKey();

@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class FcmDefaultsModel extends AbstractModel {
         reverseDartCallback   = getValueOrDefault(arguments, FcmDefinitions.DART_BG_HANDLE, String.class, "0");
         backgroundHandleClass = getValueOrDefault(arguments, Definitions.NOTIFICATION_BG_HANDLE_CLASS, String.class, null);
         licenseKeys           = getValueOrDefaultList(arguments, FcmDefinitions.LICENSE_KEYS, null);
+        if (licenseKeys == null) licenseKeys = new ArrayList<>();
         return this;
     }
 
