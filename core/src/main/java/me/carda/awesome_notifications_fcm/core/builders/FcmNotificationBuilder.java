@@ -175,8 +175,9 @@ public class FcmNotificationBuilder {
                 );
 
         parsedNotificationContent = MapUtils.deepMerge(
-                parsedNotificationContent,
-                originalNotificationData);
+            originalNotificationData,
+            parsedNotificationContent
+        );
 
         Map<String, Object> parsedRemoteMessage = new HashMap<>();
         parsedRemoteMessage.put(Definitions.NOTIFICATION_MODEL_CONTENT, parsedNotificationContent);
