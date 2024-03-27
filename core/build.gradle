@@ -34,6 +34,7 @@ android {
 }
 
 def firebaseCoreProject = findProject(':firebase_core')
+
 def getRootProjectExtOrCoreProperty(name, firebaseCoreProject) {
     if (firebaseCoreProject == null) return '30.3.1'
     if (!rootProject.ext.has('FlutterFire')) return firebaseCoreProject.properties[name]
@@ -43,8 +44,12 @@ def getRootProjectExtOrCoreProperty(name, firebaseCoreProject) {
 }
 
 dependencies {
-    implementation 'me.carda:AndroidAwnCore:[0.9.3, 0.10.0)'
-//    implementation project(':awn_core')
+    // AWN Core from github repo add https://github.com/sagnik-sanyal/AndroidAwnCore.git
+    implementation 'com.github.sagnik-sanyal:AndroidAwnCore:main-SNAPSHOT'
+
+
+//    implementation 'me.carda:AndroidAwnCore:[0.9.3, 0.10.0)'
+    // implementation project(':awn_core')
 
     implementation 'com.google.android.gms:play-services-base:18.3.0'
 
@@ -80,7 +85,7 @@ dependencies {
 afterEvaluate {
     publishing {
         publications {
-            release (MavenPublication) {
+            release(MavenPublication) {
                 from components.release
 
                 groupId = 'me.carda'
